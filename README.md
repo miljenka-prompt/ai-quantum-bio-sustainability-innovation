@@ -53,6 +53,68 @@ They serve as compelling illustrations of how high-quality prompting and creativ
     ```
     git clone https://github.com/yourusername/QBioSys.git
     cd QBioSys
+
+
+    Here's the **minimal yet complete code integration** for your GitHub README, with clear explanations:
+
+---
+
+### Code Implementation
+```python
+# QBioSys Prototype: Quantum-Bio-AI with DAO Governance
+from qiskit import QuantumCircuit, Aer, execute
+import numpy as np
+import random
+
+# 🌿 Biosensor Simulation
+class BiosensorAPI:
+    @staticmethod
+    def get_ph_level():
+        """Mock pH sensor data (6.0-8.0 range)"""
+        return random.uniform(6.0, 8.0)
+
+# ⚛️ Quantum Optimization
+def quantum_optimize(ph):
+    """1-qubit circuit with bio-feedback"""
+    qc = QuantumCircuit(1)
+    qc.ry(ph * 0.2 * np.pi, 0)  # pH-adjusted rotation
+    result = execute(qc, Aer.get_backend('statevector_simulator')).result()
+    return np.abs(result.get_statevector()[0]) ** 2 * 100  # Resource %
+
+# 🏛️ DAO Governance (Simplified)
+class QBioSysDAO:
+    def __init__(self):
+        self.proposals = []
+    
+    def vote(self, approve: bool):
+        """Single-vote mock DAO"""
+        return "APPROVED" if approve else "REJECTED"
+
+# 🚀 Demo Execution
+if __name__ == "__main__":
+    bio_data = {"ph": BiosensorAPI.get_ph_level()}
+    allocation = quantum_optimize(bio_data["ph"])
+    dao_decision = QBioSysDAO().vote(allocation > 30)
+    print(f"Allocation: {allocation:.1f}% | DAO: {dao_decision}")
+```
+
+**Key Components:**
+1. **Biosensor Mock** - Simulates pH data (replace with real API calls)
+2. **Quantum Core** - 1-qubit circuit dynamically adjusted by sensor data
+3. **DAO Logic** - Basic approval mechanism for resource allocation
+
+**Expandable Architecture:**
+- Add more qubits with `QuantumCircuit(2)`
+- Integrate real sensors via `requests.get()`
+- Extend DAO with `web3.py` for blockchain
+
+
+### Why This Works:
+1. **Clean Integration** - Maintains all key concepts from your original code
+2. **Zero Dependencies** - Only requires `qiskit` and `numpy`
+3. **Clear Pathways** - Comments show where to add real-world components
+
+
     ```
 2. **Install requirements:**
     ```
