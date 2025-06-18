@@ -4,7 +4,7 @@ QBioSys: open-source prototype with quantum computing, AI, and bio-feedback. Cre
 # 🌱 QBioSys: Hybrid Quantum-Bio-AI Framework
 
 **Author:** Miljenka Ćurković  
-**Date:** July 2025  
+**Date:** June 2025  
 **License:** MIT
 
 ---
