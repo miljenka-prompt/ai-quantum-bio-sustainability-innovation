@@ -194,7 +194,7 @@ This repository is committed to the principles of ethical technology, transparen
 ## Contact
 
 For collaboration, questions, or permissions, please reach out via GitHub issues or email:  
-**miljenkacur@gmail.com**
+**miljenka.qeit@proton.me**
 
 ---
 
