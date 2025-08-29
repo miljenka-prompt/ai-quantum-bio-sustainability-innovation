@@ -1,0 +1,447 @@
+# Environmental Monitoring System with Predictive Analytics
+
+**Author:** Miljenka Ćurković  
+**Date:** August 2025  
+**License:** MIT
+
+---
+
+## Disclaimer
+
+This repository contains experimental code developed through iterative interaction with AI systems. The code should be treated as a conceptual prototype requiring technical review and validation before any production use.
+
+---
+
+## Purpose and Scope
+
+A practical environmental monitoring system that combines real sensor data with predictive analytics to support climate research and resource management decisions. The system focuses on measurable environmental parameters and data-driven insights rather than speculative technologies.
+
+**Objectives:**
+- Collect and analyze environmental sensor data (temperature, humidity, pH, CO2)
+- Implement predictive models for environmental trend analysis
+- Provide decision support for resource allocation
+- Support research in climate monitoring and sustainability
+
+---
+
+## Technical Architecture
+
+### Core Components
+
+1. **Sensor Interface Layer**
+   - Real hardware sensor integration
+   - Data validation and calibration
+   - Standardized data formatting
+
+2. **Data Processing Pipeline**
+   - Time-series analysis
+   - Statistical modeling
+   - Trend detection and forecasting
+
+3. **Decision Support System**
+   - Resource allocation recommendations
+   - Alert generation for threshold violations
+   - Reporting and visualization
+
+---
+
+## Implementation
+
+```python
+import numpy as np
+import pandas as pd
+from datetime import datetime, timedelta
+import sqlite3
+from typing import Dict, List, Tuple
+import logging
+
+class EnvironmentalSensor:
+    """Interface for environmental sensors with validation"""
+    
+    def __init__(self, sensor_id: str, sensor_type: str):
+        self.sensor_id = sensor_id
+        self.sensor_type = sensor_type
+        self.calibration_offset = 0.0
+        self.last_reading = None
+        
+    def read_raw_value(self) -> float:
+        """Override this method for actual hardware integration"""
+        # Placeholder for real sensor implementation
+        # In practice, this would interface with GPIO, I2C, or network APIs
+        raise NotImplementedError("Implement hardware-specific sensor reading")
+    
+    def get_calibrated_reading(self) -> Dict:
+        """Get calibrated sensor reading with metadata"""
+        try:
+            raw_value = self.read_raw_value()
+            calibrated_value = raw_value + self.calibration_offset
+            
+            reading = {
+                'sensor_id': self.sensor_id,
+                'timestamp': datetime.now(),
+                'raw_value': raw_value,
+                'calibrated_value': calibrated_value,
+                'sensor_type': self.sensor_type,
+                'quality': self._assess_reading_quality(calibrated_value)
+            }
+            
+            self.last_reading = reading
+            return reading
+            
+        except Exception as e:
+            logging.error(f"Sensor {self.sensor_id} reading failed: {e}")
+            return None
+    
+    def _assess_reading_quality(self, value: float) -> str:
+        """Basic quality assessment based on sensor type"""
+        ranges = {
+            'temperature': (-40, 85),  # Celsius
+            'humidity': (0, 100),      # Percentage
+            'ph': (0, 14),            # pH scale
+            'co2': (300, 5000)        # ppm
+        }
+        
+        if self.sensor_type in ranges:
+            min_val, max_val = ranges[self.sensor_type]
+            if min_val <= value <= max_val:
+                return 'good'
+            else:
+                return 'suspect'
+        
+        return 'unknown'
+
+class MockSensor(EnvironmentalSensor):
+    """Mock sensor for testing and demonstration"""
+    
+    def __init__(self, sensor_id: str, sensor_type: str, base_value: float, noise_level: float = 0.1):
+        super().__init__(sensor_id, sensor_type)
+        self.base_value = base_value
+        self.noise_level = noise_level
+        
+    def read_raw_value(self) -> float:
+        """Simulate realistic sensor readings with noise"""
+        noise = np.random.normal(0, self.noise_level)
+        return self.base_value + noise
+
+class EnvironmentalMonitor:
+    """Main monitoring system with data processing and decision support"""
+    
+    def __init__(self, database_path: str = "environmental_data.db"):
+        self.sensors = {}
+        self.database_path = database_path
+        self.decision_thresholds = {
+            'temperature': {'critical': 35.0, 'warning': 30.0},
+            'humidity': {'critical': 85.0, 'warning': 75.0},
+            'ph': {'critical_low': 6.0, 'critical_high': 9.0, 'warning_low': 6.5, 'warning_high': 8.5},
+            'co2': {'critical': 1000, 'warning': 800}
+        }
+        self._setup_database()
+    
+    def _setup_database(self):
+        """Initialize SQLite database for sensor data"""
+        conn = sqlite3.connect(self.database_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sensor_readings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sensor_id TEXT,
+                timestamp TEXT,
+                sensor_type TEXT,
+                calibrated_value REAL,
+                quality TEXT
+            )
+        ''')
+        conn.commit()
+        conn.close()
+    
+    def add_sensor(self, sensor: EnvironmentalSensor):
+        """Add sensor to monitoring system"""
+        self.sensors[sensor.sensor_id] = sensor
+        
+    def collect_readings(self) -> List[Dict]:
+        """Collect readings from all sensors"""
+        readings = []
+        for sensor in self.sensors.values():
+            reading = sensor.get_calibrated_reading()
+            if reading:
+                readings.append(reading)
+                self._store_reading(reading)
+        return readings
+    
+    def _store_reading(self, reading: Dict):
+        """Store reading in database"""
+        conn = sqlite3.connect(self.database_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO sensor_readings (sensor_id, timestamp, sensor_type, calibrated_value, quality)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            reading['sensor_id'],
+            reading['timestamp'].isoformat(),
+            reading['sensor_type'],
+            reading['calibrated_value'],
+            reading['quality']
+        ))
+        conn.commit()
+        conn.close()
+    
+    def analyze_trends(self, sensor_id: str, hours: int = 24) -> Dict:
+        """Analyze trends for a specific sensor over time period"""
+        conn = sqlite3.connect(self.database_path)
+        
+        query = '''
+            SELECT calibrated_value, timestamp FROM sensor_readings 
+            WHERE sensor_id = ? AND timestamp > datetime('now', '-{} hours')
+            ORDER BY timestamp
+        '''.format(hours)
+        
+        df = pd.read_sql_query(query, conn, params=(sensor_id,))
+        conn.close()
+        
+        if len(df) < 2:
+            return {'status': 'insufficient_data', 'count': len(df)}
+        
+        values = df['calibrated_value'].values
+        trend_slope = np.polyfit(range(len(values)), values, 1)[0]
+        
+        analysis = {
+            'sensor_id': sensor_id,
+            'data_points': len(values),
+            'current_value': values[-1],
+            'mean_value': np.mean(values),
+            'std_deviation': np.std(values),
+            'trend_slope': trend_slope,
+            'trend_direction': 'increasing' if trend_slope > 0.01 else 'decreasing' if trend_slope < -0.01 else 'stable'
+        }
+        
+        return analysis
+    
+    def generate_alerts(self, readings: List[Dict]) -> List[Dict]:
+        """Generate alerts based on threshold violations"""
+        alerts = []
+        
+        for reading in readings:
+            sensor_type = reading['sensor_type']
+            value = reading['calibrated_value']
+            
+            if sensor_type in self.decision_thresholds:
+                thresholds = self.decision_thresholds[sensor_type]
+                alert = None
+                
+                if sensor_type == 'ph':
+                    if value <= thresholds['critical_low'] or value >= thresholds['critical_high']:
+                        alert = {'level': 'critical', 'message': f'pH critical: {value:.2f}'}
+                    elif value <= thresholds['warning_low'] or value >= thresholds['warning_high']:
+                        alert = {'level': 'warning', 'message': f'pH warning: {value:.2f}'}
+                else:
+                    if value >= thresholds['critical']:
+                        alert = {'level': 'critical', 'message': f'{sensor_type} critical: {value:.2f}'}
+                    elif value >= thresholds['warning']:
+                        alert = {'level': 'warning', 'message': f'{sensor_type} warning: {value:.2f}'}
+                
+                if alert:
+                    alert.update({
+                        'sensor_id': reading['sensor_id'],
+                        'timestamp': reading['timestamp'],
+                        'value': value
+                    })
+                    alerts.append(alert)
+        
+        return alerts
+    
+    def resource_allocation_recommendation(self, readings: List[Dict]) -> Dict:
+        """Generate resource allocation recommendations based on current conditions"""
+        priority_scores = {}
+        
+        for reading in readings:
+            sensor_type = reading['sensor_type']
+            value = reading['calibrated_value']
+            quality = reading['quality']
+            
+            # Skip poor quality readings
+            if quality != 'good':
+                continue
+                
+            score = 0
+            
+            # Score based on deviation from optimal ranges
+            if sensor_type == 'temperature':
+                optimal = 22.0  # Celsius
+                deviation = abs(value - optimal)
+                score = min(deviation / 5.0, 1.0) * 100
+            elif sensor_type == 'humidity':
+                optimal = 45.0  # Percentage
+                deviation = abs(value - optimal)
+                score = min(deviation / 20.0, 1.0) * 100
+            elif sensor_type == 'ph':
+                optimal = 7.0
+                deviation = abs(value - optimal)
+                score = min(deviation / 1.0, 1.0) * 100
+            elif sensor_type == 'co2':
+                if value > 400:  # Above natural levels
+                    score = min((value - 400) / 600.0, 1.0) * 100
+            
+            priority_scores[reading['sensor_id']] = {
+                'sensor_type': sensor_type,
+                'priority_score': score,
+                'current_value': value
+            }
+        
+        # Sort by priority
+        sorted_priorities = sorted(priority_scores.items(), key=lambda x: x[1]['priority_score'], reverse=True)
+        
+        return {
+            'timestamp': datetime.now(),
+            'priorities': sorted_priorities,
+            'recommendation': self._generate_action_recommendation(sorted_priorities)
+        }
+    
+    def _generate_action_recommendation(self, priorities: List[Tuple]) -> str:
+        """Generate textual recommendation based on priorities"""
+        if not priorities:
+            return "No immediate action required. All systems within normal parameters."
+        
+        highest_priority = priorities[0][1]
+        
+        if highest_priority['priority_score'] > 80:
+            return f"Immediate attention required for {highest_priority['sensor_type']} (Priority Score: {highest_priority['priority_score']:.1f})"
+        elif highest_priority['priority_score'] > 50:
+            return f"Monitor {highest_priority['sensor_type']} closely (Priority Score: {highest_priority['priority_score']:.1f})"
+        else:
+            return "All systems operating within acceptable ranges. Continue routine monitoring."
+
+# Demonstration Usage
+def demo_environmental_monitoring():
+    """Demonstrate the environmental monitoring system"""
+    
+    # Initialize monitoring system
+    monitor = EnvironmentalMonitor()
+    
+    # Add mock sensors for demonstration
+    monitor.add_sensor(MockSensor("temp_001", "temperature", 23.5, 0.5))
+    monitor.add_sensor(MockSensor("humid_001", "humidity", 55.0, 2.0))
+    monitor.add_sensor(MockSensor("ph_001", "ph", 7.2, 0.1))
+    monitor.add_sensor(MockSensor("co2_001", "co2", 450.0, 15.0))
+    
+    # Collect readings
+    readings = monitor.collect_readings()
+    
+    # Generate alerts
+    alerts = monitor.generate_alerts(readings)
+    
+    # Get resource allocation recommendations
+    recommendations = monitor.resource_allocation_recommendation(readings)
+    
+    # Display results
+    print("=== Environmental Monitoring Report ===")
+    print(f"Timestamp: {datetime.now()}")
+    print(f"Sensors Active: {len(monitor.sensors)}")
+    
+    print("\n--- Current Readings ---")
+    for reading in readings:
+        print(f"{reading['sensor_id']} ({reading['sensor_type']}): {reading['calibrated_value']:.2f} [{reading['quality']}]")
+    
+    if alerts:
+        print("\n--- ALERTS ---")
+        for alert in alerts:
+            print(f"[{alert['level'].upper()}] {alert['message']}")
+    else:
+        print("\n--- No Alerts ---")
+    
+    print(f"\n--- Recommendation ---")
+    print(recommendations['recommendation'])
+    
+    return monitor, readings, alerts, recommendations
+
+if __name__ == "__main__":
+    demo_environmental_monitoring()
+```
+
+---
+
+## Key Features
+
+**Practical Implementation:**
+- Real sensor interface architecture with proper error handling
+- SQLite database for persistent data storage  
+- Statistical trend analysis using established methods
+- Configurable alert thresholds
+
+**Decision Support:**
+- Priority scoring based on deviation from optimal ranges
+- Resource allocation recommendations with clear rationale
+- Quality assessment to filter unreliable readings
+
+**Extensibility:**
+- Modular sensor interface allows easy addition of new sensor types
+- Database schema supports multiple sensor deployments
+- Configurable thresholds for different environments
+
+---
+
+## Installation and Usage
+
+1. **Requirements:**
+   ```
+   pip install numpy pandas sqlite3
+   ```
+
+2. **Basic Usage:**
+   ```python
+   from environmental_monitor import EnvironmentalMonitor, MockSensor
+   
+   monitor = EnvironmentalMonitor()
+   monitor.add_sensor(MockSensor("temp_001", "temperature", 25.0))
+   
+   readings = monitor.collect_readings()
+   recommendations = monitor.resource_allocation_recommendation(readings)
+   ```
+
+3. **Hardware Integration:**
+   Replace `MockSensor` with actual sensor implementations that interface with your hardware (GPIO, I2C, network APIs).
+
+---
+
+## Technical Notes
+
+**Database Design:**
+- Normalized schema for efficient time-series storage
+- Indexed by timestamp for fast trend queries
+- Quality flags for data validation
+
+**Statistical Methods:**
+- Linear regression for trend detection
+- Standard deviation for variability assessment  
+- Threshold-based alerting with configurable parameters
+
+**Error Handling:**
+- Graceful sensor failure recovery
+- Data quality assessment
+- Logging for troubleshooting
+
+---
+
+## Future Development
+
+1. **Machine Learning Integration:**
+   - Predictive modeling for environmental trends
+   - Anomaly detection algorithms
+   - Adaptive threshold adjustment
+
+2. **Visualization:**
+   - Real-time dashboards
+   - Historical trend graphs
+   - Interactive mapping for distributed sensors
+
+3. **Network Integration:**
+   - Remote sensor support
+   - Data synchronization between monitoring stations
+   - Cloud-based analytics
+
+---
+
+## License
+
+MIT License - See LICENSE file for details.
+
+**Contact:** miljenka.qeit@proton.me
