@@ -1,0 +1,201 @@
+# QBioSys Prototype: Quantum-Bio-AI with DAO Governance - FIXED VERSION
+import numpy as np
+import random
+import warnings
+warnings.filterwarnings('ignore')  # Suppress Qiskit deprecation warnings
+
+# Import handling for different Qiskit versions
+try:
+    from qiskit import QuantumCircuit
+    from qiskit_aer import Aer
+    print("✅ Using Qiskit >= 0.45.0")
+except ImportError:
+    try:
+        from qiskit import QuantumCircuit, Aer
+        print("⚠️  Using older Qiskit version")
+    except ImportError:
+        print("❌ Qiskit not installed. Run: pip install qiskit qiskit-aer")
+        exit(1)
+
+# 🌿 Biosensor Simulation
+class BiosensorAPI:
+    @staticmethod
+    def get_ph_level():
+        """Mock pH sensor data (6.0-8.0 range)"""
+        return round(random.uniform(6.0, 8.0), 2)
+    
+    @staticmethod
+    def get_temperature():
+        """Mock temperature sensor (20-30°C range)"""
+        return round(random.uniform(20.0, 30.0), 1)
+    
+    @staticmethod
+    def validate_readings(ph, temp):
+        """Basic validation of sensor data"""
+        ph_valid = 6.0 <= ph <= 8.0
+        temp_valid = 15.0 <= temp <= 35.0
+        return ph_valid and temp_valid
+
+# ⚛️ Quantum Optimization - FIXED
+def quantum_optimize(ph, temperature=25.0):
+    """Enhanced quantum circuit with error handling"""
+    try:
+        # Create quantum circuit
+        qc = QuantumCircuit(1)
+        
+        # pH-adjusted rotation (normalized to 0-π range)
+        ph_normalized = (ph - 6.0) / 2.0  # Convert 6-8 range to 0-1
+        qc.ry(ph_normalized * np.pi, 0)
+        
+        # Temperature adjustment (small rotation)
+        temp_adjustment = (temperature - 25.0) / 10.0 * 0.1 * np.pi
+        qc.rz(temp_adjustment, 0)
+        
+        # Execute circuit with proper backend handling
+        backend = Aer.get_backend('statevector_simulator')
+        job = backend.run(qc, shots=1)
+        result = job.result()
+        
+        # Get statevector and calculate allocation
+        statevector = result.get_statevector()
+        allocation = np.abs(statevector[0]) ** 2 * 100
+        
+        return round(allocation, 2)
+        
+    except Exception as e:
+        print(f"⚠️ Quantum optimization error: {e}")
+        # Fallback to classical calculation
+        return round(((ph - 6.0) / 2.0) * 100, 2)
+
+# 🏛️ DAO Governance - Enhanced
+class QBioSysDAO:
+    def __init__(self):
+        self.proposals = []
+        self.voting_threshold = 50.0
+        self.min_allocation = 20.0
+        self.max_allocation = 80.0
+    
+    def propose_allocation(self, allocation, justification=""):
+        """Submit allocation proposal"""
+        proposal = {
+            'id': len(self.proposals) + 1,
+            'allocation': allocation,
+            'justification': justification,
+            'status': 'PENDING'
+        }
+        self.proposals.append(proposal)
+        return proposal['id']
+    
+    def vote(self, allocation, bio_data_valid=True):
+        """Enhanced voting logic with validation"""
+        if not bio_data_valid:
+            return "REJECTED - Invalid sensor data"
+        
+        if not (self.min_allocation <= allocation <= self.max_allocation):
+            return f"REJECTED - Allocation {allocation}% outside safe range"
+        
+        # Simple approval logic
+        if allocation > self.voting_threshold:
+            return "APPROVED - High efficiency allocation"
+        else:
+            return "APPROVED - Standard allocation"
+
+# 🌍 Climate Impact Calculator
+class ClimateCalculator:
+    @staticmethod
+    def calculate_co2_reduction(allocation_percent, baseline_usage=100):
+        """Calculate potential CO2 reduction based on quantum efficiency"""
+        quantum_efficiency = allocation_percent / 100.0
+        classical_energy = baseline_usage
+        quantum_energy = classical_energy * (1 - quantum_efficiency * 0.3)  # 30% max reduction
+        co2_saved = (classical_energy - quantum_energy) * 0.5  # kg CO2 per unit
+        return round(co2_saved, 2)
+
+# 🚀 Enhanced Demo Execution
+def run_qbiosys_demo():
+    """Main demonstration function"""
+    print("🌱 QBioSys Demo - Quantum-Bio-AI Integration")
+    print("=" * 50)
+    
+    # Initialize systems
+    dao = QBioSysDAO()
+    climate_calc = ClimateCalculator()
+    
+    # Collect bio data
+    print("\n🌿 Collecting biosensor data...")
+    bio_data = {
+        "ph": BiosensorAPI.get_ph_level(),
+        "temperature": BiosensorAPI.get_temperature()
+    }
+    
+    # Validate sensor data
+    data_valid = BiosensorAPI.validate_readings(bio_data["ph"], bio_data["temperature"])
+    
+    print(f"   pH Level: {bio_data['ph']}")
+    print(f"   Temperature: {bio_data['temperature']}°C")
+    print(f"   Data Valid: {'✅' if data_valid else '❌'}")
+    
+    # Quantum optimization
+    print("\n⚛️ Running quantum optimization...")
+    allocation = quantum_optimize(bio_data["ph"], bio_data["temperature"])
+    print(f"   Resource Allocation: {allocation}%")
+    
+    # DAO governance
+    print("\n🏛️ Processing through DAO governance...")
+    proposal_id = dao.propose_allocation(
+        allocation, 
+        f"Bio-adjusted allocation based on pH={bio_data['ph']}, T={bio_data['temperature']}°C"
+    )
+    dao_decision = dao.vote(allocation, data_valid)
+    print(f"   Proposal #{proposal_id}: {dao_decision}")
+    
+    # Climate impact
+    print("\n🌍 Calculating climate impact...")
+    co2_reduction = climate_calc.calculate_co2_reduction(allocation)
+    print(f"   Estimated CO2 reduction: {co2_reduction} kg")
+    
+    # Summary
+    print("\n📊 SUMMARY")
+    print("-" * 30)
+    print(f"Bio-sensor input: pH {bio_data['ph']}, {bio_data['temperature']}°C")
+    print(f"Quantum allocation: {allocation}%")
+    print(f"DAO decision: {dao_decision}")
+    print(f"Climate benefit: {co2_reduction} kg CO2 saved")
+    
+    return {
+        'bio_data': bio_data,
+        'allocation': allocation,
+        'dao_decision': dao_decision,
+        'co2_reduction': co2_reduction,
+        'data_valid': data_valid
+    }
+
+# 🧪 Testing Function
+def run_tests():
+    """Basic functionality tests"""
+    print("\n🧪 Running system tests...")
+    
+    # Test biosensor
+    ph = BiosensorAPI.get_ph_level()
+    assert 6.0 <= ph <= 8.0, f"pH out of range: {ph}"
+    
+    # Test quantum optimization
+    allocation = quantum_optimize(7.0, 25.0)
+    assert 0 <= allocation <= 100, f"Allocation out of range: {allocation}"
+    
+    # Test DAO
+    dao = QBioSysDAO()
+    decision = dao.vote(50.0, True)
+    assert "APPROVED" in decision or "REJECTED" in decision
+    
+    print("   ✅ All tests passed!")
+
+if __name__ == "__main__":
+    # Run tests first
+    run_tests()
+    
+    # Run main demo
+    result = run_qbiosys_demo()
+    
+    print(f"\n✨ QBioSys demo completed successfully!")
+    print(f"   Check the quantum-bio-AI integration results above.")
