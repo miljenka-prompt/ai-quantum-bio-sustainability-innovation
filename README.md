@@ -12,6 +12,7 @@ Ovo spremište sadrži eksperimentalni kod generiran kroz iterativnu interakciju
 Preporučuje se **stručna revizija i neovisna validacija** prije ponovne upotrebe ili integracije u druge sustave.  
 Projekt se dijeli u duhu otvorenog znanstvenog istraživanja i suradnje.
 
+
 # ai-quantum-bio-sustainability-innovation
 QBioSys: open-source prototype with quantum computing, AI, and bio-feedback. Created via prompting and intuition. Explores creative, ethical, sustainable solutions for climate, resources, and AI safety. Experimental, untested, for inspiration only.
 
@@ -153,6 +154,10 @@ This repository hosts a collection of my personal and collaborative projects, in
 ## About
 
 Each project in this repository is the result of original research, creative exploration, and collaboration. The aim is to contribute to open, ethical, and human-centered technology, with a focus on transparency, empathy, and public good.
+
+Limitations and technical notes
+see LIMITATIONS - TECHNICAL_NOTES
+
 
 ## Copyright & License
 
