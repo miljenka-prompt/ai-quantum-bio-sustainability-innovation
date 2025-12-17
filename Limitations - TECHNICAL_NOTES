@@ -1,0 +1,92 @@
+
+
+⚠️ Known Limitations & Technical Notes
+
+⚠️ Poznata ograničenja i tehničke napomene
+
+1. Experimental Nature
+
+EN
+This repository represents an experimental proof-of-concept (PoC).
+The quantum, biological, and governance components are demonstrative and exploratory, not optimized or validated for production deployment.
+
+HR
+Ovo spremište predstavlja eksperimentalni dokaz koncepta (PoC).
+Kvantne, biološke i upravljačke komponente su demonstracijske i istraživačke, a ne optimizirane niti validirane za produkcijsku upotrebu.
+
+
+2. Quantum Component Scope
+
+EN
+The quantum circuit uses a minimal 1-qubit configuration executed on simulators (statevector or qasm backends).
+It is intended to illustrate parameter-dependent quantum behavior, not to claim quantum advantage or physical realism.
+
+HR
+Kvantni sklop koristi minimalnu konfiguraciju od 1 kubita i izvodi se na simulatorima (statevector ili qasm backend).
+Namijenjen je ilustraciji kvantnog ponašanja ovisnog o parametrima, a ne dokazivanju kvantne prednosti ili fizičke realnosti.
+
+
+3. Interpretation of “Allocation”
+
+EN
+The computed “resource allocation” value is derived from quantum state amplitudes and should be interpreted as a conceptual metric, not a physically measurable quantity.
+
+HR
+Izračunata vrijednost “alokacije resursa” izvedena je iz amplituda kvantnog stanja i treba se tumačiti kao konceptualna metrika, a ne kao fizički mjerljiva veličina.
+
+
+4. DAO Governance Disclaimer
+
+EN
+The governance layer labeled as “DAO” is a rule-based simulation of decision logic.
+It does not implement distributed consensus, cryptographic identity, or blockchain infrastructure.
+
+HR
+Upravljački sloj označen kao “DAO” predstavlja simulaciju odlučivanja temeljenu na pravilima.
+Ne implementira distribuirani konsenzus, kriptografski identitet niti blockchain infrastrukturu.
+
+
+5. Biosensor Data
+
+EN
+Biological sensor inputs are currently simulated or simplified.
+Real-world deployment requires certified hardware, calibration procedures, and environmental validation.
+
+HR
+Ulazni podaci bioloških senzora trenutačno su simulirani ili pojednostavljeni.
+Primjena u stvarnom okruženju zahtijeva certificirani hardver, kalibracijske postupke i validaciju okolišnih uvjeta.
+
+
+6. Error Handling & Fallback Logic
+
+EN
+Fallback mechanisms are included to ensure demo continuity in case of quantum backend errors.
+Fallback outputs are not equivalent to quantum results and serve continuity only.
+
+HR
+Uključeni su mehanizmi povratnog izračuna (fallback) radi kontinuiteta demonstracije u slučaju grešaka kvantnog backenda.
+Fallback rezultati nisu ekvivalentni kvantnim rezultatima i služe isključivo kontinuitetu rada.
+
+
+7. Testing Scope
+
+EN
+Included tests are basic sanity and smoke tests.
+They do not replace comprehensive unit testing, integration testing, or security audits.
+
+HR
+Uključeni testovi su osnovni sanity i smoke testovi.
+Ne zamjenjuju opsežno jedinično testiranje, integracijsko testiranje niti sigurnosne revizije.
+
+
+8. Intended Use
+
+EN
+This project is intended for research, education, grant evaluation, and interdisciplinary discussion.
+Any production, commercial, or operational use requires independent technical review.
+
+HR
+Projekt je namijenjen istraživanju, edukaciji, evaluaciji grantova i interdisciplinarnoj raspravi.
+Svaka produkcijska, komercijalna ili operativna primjena zahtijeva neovisnu tehničku reviziju.
+
+
